@@ -52,7 +52,6 @@
 
 <header class="header-nav hidden" id="main-header">
     <div style="display: flex; align-items: center; gap: 20px;">
-        <!-- Verbatim: Panya_New_logo-removebg-preview.png -->
         <img src="Panya_New_logo-removebg-preview.png" class="panya-logo">
         <div class="sponsor-text">This Mock Test is provided <strong>Free of Cost</strong> by Panya Computech LLP</div>
     </div>
@@ -159,16 +158,28 @@
         examQuestions.forEach((q, i) => {
             const opts = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
             const studentIdx = userAnswers[q.id];
-            const correctIdx = q.correct_option;
+            const correctIdx = parseInt(q.correct_option); 
             const alphabet = ['A', 'B', 'C', 'D'];
+            
             const isCorrect = (studentIdx !== undefined && studentIdx == correctIdx);
             if (isCorrect) score++;
+
+            const correctAnswerText = opts[correctIdx] || "Error retrieving answer";
+            const studentAnswerText = studentIdx !== undefined ? (opts[studentIdx] || "Choice recorded") : "Not Answered";
 
             reviewHTML += `
                 <div style="padding: 20px; border-bottom: 1px solid #eee; background: ${isCorrect ? '#f0fff4' : '#fff5f5'}">
                     <p><strong>Q${i+1}:</strong> ${q.question}</p>
-                    <p style="margin: 5px 0;">👤 <strong>Your Answer:</strong> ${studentIdx !== undefined ? alphabet[studentIdx] + ') ' + opts[studentIdx] : 'Not Answered'}</p>
-                    <p style="margin: 5px 0;">✅ <strong>Correct Answer:</strong> <span style="color: #27ae60; font-weight: bold;">${alphabet[correctIdx]}) ${opts[correctIdx]}</span></p>
+                    <p style="margin: 5px 0;">👤 <strong>Your Answer:</strong> 
+                       <span style="color: ${isCorrect ? '#27ae60' : '#e74c3c'}">
+                           ${studentIdx !== undefined ? alphabet[studentIdx] + ') ' + studentAnswerText : 'Not Answered'}
+                       </span>
+                    </p>
+                    <p style="margin: 5px 0;">✅ <strong>Correct Answer:</strong> 
+                       <span style="color: #27ae60; font-weight: bold;">
+                           ${alphabet[correctIdx]}) ${correctAnswerText}
+                       </span>
+                    </p>
                 </div>`;
         });
 
@@ -180,7 +191,8 @@
                     <div style="font-size:3.5rem; font-weight:800;">${score} / ${total}</div>
                 </div>
                 <button class="btn-final" onclick="location.reload()">Take Another Test</button>
-                ${reviewHTML}</div>`;
+                ${reviewHTML}
+            </div>`;
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 </script>
