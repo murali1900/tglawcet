@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TG LAWCET Master Prep | Panya Computech</title>
-    <!-- Supabase Library -->
+    <!-- Supabase Connector -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     
@@ -14,7 +14,7 @@
             --text: #2d3436; --border: #dfe6e9; --gold: #ffcc00;
         }
 
-        /* HARDENED PROTECTION: No selection, no right-click */
+        /* PROTECTION: Prevents text selection and highlights */
         body { 
             font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
             margin: 0; line-height: 1.6;
@@ -40,6 +40,8 @@
         .option-label { display: flex; align-items: center; padding: 16px 25px; border: 2px solid var(--border); margin: 12px 0; border-radius: 10px; cursor: pointer; transition: 0.2s; }
         .option-label:hover { border-color: var(--primary); background-color: #f8faff; }
         .option-prefix { font-weight: 700; margin-right: 15px; color: #b2bec3; font-size: 1.1rem; min-width: 25px; }
+        
+        /* Highlight the selected option */
         .option-label:has(input:checked) { border-color: var(--primary); background-color: #f0f4ff; border-width: 2.5px; }
         .option-label:has(input:checked) .option-prefix { color: var(--primary); }
 
@@ -76,7 +78,7 @@
 </div>
 
 <div id="exam-screen" class="hidden">
-    <div class="container"><div id="quiz-body">Initializing...</div></div>
+    <div class="container"><div id="quiz-body">Initializing Professional Exam Engine...</div></div>
 </div>
 
 <script>
@@ -88,18 +90,17 @@
     let examQuestions = []; 
     let timerInterval; 
     let tabSwitches = 0;
-    let isExamActive = false; // Logic Gate
+    let isExamActive = false;
 
     /* --- HARDENED PROTECTION --- */
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.onkeydown = e => { if(e.keyCode == 123 || (e.ctrlKey && [67,85,83,73].includes(e.keyCode))) return false; };
     
     document.addEventListener('visibilitychange', () => {
-        // Only trigger during the active exam phase
         if (document.hidden && isExamActive) {
             tabSwitches++;
             if (tabSwitches === 1) {
-                alert("⚠️ WARNING: Tab switching is NOT allowed during the TG LAWCET Mock Test. \n\nOne more switch will result in automatic submission.");
+                alert("⚠️ WARNING: Tab switching is NOT allowed. One more switch will disqualify you.");
             } else if (tabSwitches >= 2) {
                 alert("❌ DISQUALIFIED: Multiple tab switches detected.");
                 submitExam(true); 
@@ -133,7 +134,7 @@
             examQuestions = data; 
             renderQuiz(); 
             startTimer(90); 
-            isExamActive = true; // Activate protection
+            isExamActive = true; 
         }
     }
 
@@ -146,15 +147,11 @@
                 <div style="font-weight:600; font-size:1.1rem; margin-bottom:20px;">${i+1}. ${q.question}</div>
                 ${opts.map((opt, idx) => `
                     <label class="option-label">
-                        <input type="radio" name="q${q.id}" onchange="recordAnswer('${q.id}', ${idx})">
+                        <input type="radio" name="q${q.id}" onchange="userAnswers['${q.id}']=${idx}">
                         <span class="option-prefix">${alphabet[idx]}.</span><span>${opt}</span>
                     </label>`).join('')}
             </div>`;
         }).join('');
-    }
-
-    function recordAnswer(qId, idx) {
-        userAnswers[qId] = idx;
     }
 
     function startTimer(min) {
@@ -166,23 +163,25 @@
         }, 1000);
     }
 
-    /* --- FINAL SUBMISSION & REVIEW --- */
+    /* --- BULLETPROOF SCORING & REVIEW --- */
     function submitExam(auto = false) {
-        if (!auto && !confirm(`Submit your exam and see results?`)) return;
+        const total = examQuestions.length;
+        const answered = Object.keys(userAnswers).length;
+        if (!auto && !confirm(`Declare Results?\nAnswered: ${answered} / ${total}`)) return;
         
-        isExamActive = false; // Deactivate protection for results phase
+        isExamActive = false; 
         clearInterval(timerInterval);
         
         let score = 0;
-        let reviewHTML = `<div style="margin-top: 40px; text-align: left;"><h3 style="color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 10px;">Review Key</h3>`;
+        let reviewHTML = `<div style="margin-top: 40px; text-align: left;"><h3>Review Key</h3>`;
 
         examQuestions.forEach((q, i) => {
             const opts = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
-            const studentIdx = userAnswers[q.id];
-            const correctIdx = q.correct_option;
+            const studentIdx = userAnswers[q.id]; 
+            const correctIdx = Number(q.correct_option); // Robust Number Conversion
             const alphabet = ['A', 'B', 'C', 'D'];
             
-            // Loose equality for data type safety
+            // Loose equality comparison to bypass type mismatches (string vs number)
             const isCorrect = (studentIdx != null && studentIdx == correctIdx);
             if (isCorrect) score++;
 
@@ -205,7 +204,7 @@
         document.getElementById('exam-screen').innerHTML = `
             <div class="container" style="text-align:center;">
                 <img src="Panya_New_logo-removebg-preview.png" style="height:60px; margin-bottom:20px;">
-                <h1 style="color:var(--primary);">Final Score: ${score} / ${examQuestions.length}</h1>
+                <h1 style="color:var(--primary);">Final Score: ${score} / ${total}</h1>
                 <button class="btn-final" onclick="location.reload()">Restart Mock Test</button>
                 ${reviewHTML}
             </div>`;
