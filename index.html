@@ -14,7 +14,6 @@
             --text: #2d3436; --border: #dfe6e9; --gold: #ffcc00;
         }
 
-        /* PROTECTION: Prevents text selection and highlights */
         body { 
             font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
             margin: 0; line-height: 1.6;
@@ -41,7 +40,6 @@
         .option-label:hover { border-color: var(--primary); background-color: #f8faff; }
         .option-prefix { font-weight: 700; margin-right: 15px; color: #b2bec3; font-size: 1.1rem; min-width: 25px; }
         
-        /* Highlight the selected option */
         .option-label:has(input:checked) { border-color: var(--primary); background-color: #f0f4ff; border-width: 2.5px; }
         .option-label:has(input:checked) .option-prefix { color: var(--primary); }
 
@@ -178,10 +176,10 @@
         examQuestions.forEach((q, i) => {
             const opts = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
             const studentIdx = userAnswers[q.id]; 
-            const correctIdx = Number(q.correct_option); // Robust Number Conversion
+            // FIXED: Using 'correct_index' from your Supabase schema
+            const correctIdx = Number(q.correct_index); 
             const alphabet = ['A', 'B', 'C', 'D'];
             
-            // Loose equality comparison to bypass type mismatches (string vs number)
             const isCorrect = (studentIdx != null && studentIdx == correctIdx);
             if (isCorrect) score++;
 
