@@ -3,239 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bhavana's TG LAWCET Pro</title>
-    <!-- Enterprise Connector -->
+    <title>TG LAWCET Master Prep | Panya Computech</title>
+    <!-- Supabase Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
         :root { 
-            --primary: #1a2a6c; 
-            --accent: #f24e1e; 
-            --bg: #f8f9fa; 
-            --text: #333;
+            --primary: #1a2a6c; --accent: #f24e1e; --bg: #f4f7f9; 
+            --text: #2d3436; --border: #dfe6e9; --gold: #ffcc00;
         }
+
+        /* HARDENED PROTECTION: No selection, no right-click */
         body { 
-            font-family: 'Inter', -apple-system, sans-serif; 
-            background: var(--bg); 
-            margin: 0; 
-            color: var(--text);
-            line-height: 1.6;
+            font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
+            margin: 0; line-height: 1.6;
+            -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
         }
-        .container { 
-            max-width: 800px; 
-            margin: 40px auto; 
-            background: white; 
-            padding: 40px; 
-            border-radius: 20px; 
-            box-shadow: 0 10px 40px rgba(0,0,0,0.08); 
+
+        .header-nav {
+            background: var(--primary); padding: 12px 40px; display: flex;
+            justify-content: space-between; align-items: center; color: white;
+            position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
-        .header { 
-            position: sticky; 
-            top: 0; 
-            background: var(--primary); 
-            color: white; 
-            padding: 15px 30px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        }
-        .btn { 
-            border: none; 
-            padding: 15px 30px; 
-            border-radius: 12px; 
-            cursor: pointer; 
-            font-size: 16px; 
-            font-weight: bold; 
-            width: 100%; 
-            transition: all 0.3s ease; 
-        }
-        .btn-auth { background: var(--primary); color: white; }
-        .btn-auth:hover { background: #121d4d; }
-        .btn-submit { background: var(--accent); color: white; }
-        .btn-submit:hover { opacity: 0.9; }
+
+        .panya-logo { height: 45px; width: auto; filter: brightness(1.1); pointer-events: none; }
+
+        .sponsor-text { font-size: 0.8rem; border-left: 1px solid rgba(255,255,255,0.3); padding-left: 20px; }
+        .sponsor-text strong { display: block; color: var(--gold); font-size: 0.9rem; }
+
+        .container { max-width: 900px; margin: 30px auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+
+        .question-block { margin-bottom: 40px; padding-bottom: 30px; border-bottom: 1px solid var(--border); }
+        .subject-badge { display: inline-block; background: #ebf0f7; color: var(--primary); padding: 5px 12px; border-radius: 4px; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 15px; }
+
+        .option-label { display: flex; align-items: center; padding: 16px 25px; border: 2px solid var(--border); margin: 12px 0; border-radius: 10px; cursor: pointer; transition: 0.2s; }
+        .option-label:hover { border-color: var(--primary); background-color: #f8faff; }
+        .option-prefix { font-weight: 700; margin-right: 15px; color: #b2bec3; font-size: 1.1rem; min-width: 25px; }
+        .option-label:has(input:checked) { border-color: var(--primary); background-color: #f0f4ff; border-width: 2.5px; }
+        .option-label:has(input:checked) .option-prefix { color: var(--primary); }
+
+        .btn-final { background: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 800; cursor: pointer; transition: 0.3s; }
+        .btn-final:hover { transform: scale(1.05); }
         .hidden { display: none; }
-        input { 
-            width: 100%; 
-            padding: 15px; 
-            margin: 10px 0; 
-            border: 2px solid #eee; 
-            border-radius: 10px; 
-            box-sizing: border-box; 
-            font-size: 16px;
-        }
-        .subject-badge {
-            display: inline-block;
-            background: #e9ecef;
-            padding: 4px 10px;
-            border-radius: 5px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            color: var(--primary);
-            margin-bottom: 8px;
-            text-transform: uppercase;
-        }
-        .timer-box {
-            font-family: monospace;
-            font-size: 1.2rem;
-            background: rgba(255,255,255,0.2);
-            padding: 5px 15px;
-            border-radius: 8px;
-        }
     </style>
 </head>
 <body>
 
-<!-- AUTHENTICATION SCREEN -->
-<div id="auth-screen" class="container" style="text-align: center;">
-    <h1>TG LAWCET 2026 - Pro Portal</h1>
-    <p>Exclusive Access for Panya Computech Students</p>
-    
-    <div id="email-section">
-        <input type="email" id="email" placeholder="Enter your registered email">
-        <button class="btn btn-auth" onclick="sendOTP()">Request Access OTP</button>
+<header class="header-nav hidden" id="main-header">
+    <div style="display: flex; align-items: center; gap: 20px;">
+        <!-- Verbatim: Panya_New_logo-removebg-preview.png -->
+        <img src="Panya_New_logo-removebg-preview.png" class="panya-logo">
+        <div class="sponsor-text">This Mock Test is provided <strong>Free of Cost</strong> by Panya Computech LLP</div>
     </div>
+    <div style="display: flex; align-items: center; gap: 25px;">
+        <div id="timer" style="font-family: monospace; font-size: 1.4rem; background: rgba(0,0,0,0.2); padding: 5px 15px; border-radius: 5px;">90:00</div>
+        <button class="btn-final" onclick="submitExam()">Final Submit</button>
+    </div>
+</header>
 
-    <div id="otp-section" class="hidden" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
-        <p>Enter the 6-digit code sent to your email:</p>
-        <input type="text" id="otp" placeholder="Enter OTP Code">
-        <button class="btn btn-submit" onclick="verifyOTP()">Verify & Start Exam</button>
+<div id="auth-screen" class="container" style="text-align: center; margin-top: 80px;">
+    <img src="Panya_New_logo-removebg-preview.png" style="height: 80px; margin-bottom: 20px;">
+    <h1 style="color: var(--primary);">TG LAWCET 2026</h1>
+    <p>Professional Assessment Portal - Panya Computech LLP</p>
+    <div id="email-section">
+        <input type="email" id="email" placeholder="Enter Registered Email" style="width: 100%; padding: 15px; border-radius: 10px; border: 2px solid #eee; margin-bottom: 15px;">
+        <button class="btn-final" style="width: 100%;" onclick="sendOTP()">Request Access OTP</button>
+    </div>
+    <div id="otp-section" class="hidden" style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 30px;">
+        <input type="text" id="otp" placeholder="000000" style="width: 150px; text-align: center; font-size: 1.5rem; letter-spacing: 5px; padding: 10px; border: 2px solid var(--primary); border-radius: 8px;">
+        <button class="btn-final" style="width: 100%; margin-top: 15px;" onclick="verifyOTP()">Verify & Start Mock Test</button>
     </div>
 </div>
 
-<!-- EXAM SIMULATOR SCREEN -->
 <div id="exam-screen" class="hidden">
-    <div class="header">
-        <div><strong>LAWCET Master Prep</strong></div>
-        <div class="timer-box" id="timer">90:00</div>
-        <button onclick="submitExam()" style="background: #ff4d4d; color: white; border: none; border-radius: 8px; padding: 8px 15px; cursor: pointer; font-weight: bold;">Final Submit</button>
-    </div>
-    
-    <div class="container">
-        <div id="quiz-body">Preparing your personalized exam...</div>
-    </div>
+    <div class="container"><div id="quiz-body">Loading...</div></div>
 </div>
 
 <script>
-    // 1. CONFIGURATION
     const SB_URL = 'https://hnvlknpfdgmtokbknoyi.supabase.co'; 
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhudmxrbnBmZGdtdG9rYmtub3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDM1MjYsImV4cCI6MjA5NDE3OTUyNn0.WNvY5FaB5nyNXiGXpATc_cHdYJnPu_isz6ELJofZN64';
     const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
-    let userAnswers = {};
-    let examQuestions = [];
-    let timerInterval;
+    let userAnswers = {}; let examQuestions = []; let timerInterval; let tabSwitches = 0;
 
-    // 2. AUTHENTICATION LOGIC
+    /* --- HARDENED PROTECTION --- */
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.onkeydown = e => { if(e.keyCode == 123 || (e.ctrlKey && [67,85,83,73].includes(e.keyCode))) return false; };
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            tabSwitches++;
+            if (tabSwitches === 1) alert("⚠️ WARNING: Tab switching is NOT allowed. One more switch will disqualify you.");
+            else if (tabSwitches >= 2) { alert("❌ DISQUALIFIED: Multiple tab switches detected. Submitting exam."); submitExam(true); }
+        }
+    });
+
+    /* --- AUTHENTICATION --- */
     async function sendOTP() {
         const email = document.getElementById('email').value;
-        if (!email) return alert("Please enter a valid email address.");
-
         const { error } = await supabaseClient.auth.signInWithOtp({ email });
-        
-        if (error) {
-            alert("Error: " + error.message);
-        } else {
-            alert("OTP has been sent to " + email);
-            document.getElementById('otp-section').classList.remove('hidden');
-            document.getElementById('email-section').style.opacity = "0.5";
-        }
+        if (error) alert(error.message); else document.getElementById('otp-section').classList.remove('hidden');
     }
 
     async function verifyOTP() {
         const email = document.getElementById('email').value;
         const token = document.getElementById('otp').value;
-        
-        const { error } = await supabaseClient.auth.verifyOtp({ 
-            email, 
-            token, 
-            type: 'email' 
-        });
-        
-        if (error) {
-            alert("Invalid or expired OTP. Please try again.");
-        } else {
-            loadExam();
-        }
+        const { error } = await supabaseClient.auth.verifyOtp({ email, token, type: 'email' });
+        if (error) alert("Invalid OTP"); else loadExam();
     }
 
-    // 3. EXAM ENGINE LOGIC
+    /* --- ENGINE --- */
     async function loadExam() {
         document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('main-header').classList.remove('hidden');
         document.getElementById('exam-screen').classList.remove('hidden');
-        
-        // Calls the SQL function get_random_exam()
         const { data, error } = await supabaseClient.rpc('get_random_exam');
-        
-        if (error) {
-            alert("Database Error: " + error.message);
-            document.getElementById('quiz-body').innerText = "Failed to load questions. Please refresh.";
-        } else {
-            examQuestions = data;
-            renderQuiz();
-            startTimer(90); // 90 Minutes
-        }
+        if (error) alert(error.message); else { examQuestions = data; renderQuiz(); startTimer(90); }
     }
 
     function renderQuiz() {
-        const body = document.getElementById('quiz-body');
-        if (examQuestions.length === 0) {
-            body.innerHTML = "No questions found for the selected categories.";
-            return;
-        }
-
-        body.innerHTML = examQuestions.map((q, i) => {
-            const options = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
-            
-            return `
-                <div style="border-bottom: 1px solid #eee; padding: 25px 0;">
-                    <div class="subject-badge">${q.subject}</div>
-                    <p style="font-size: 1.1rem; margin-top: 5px;"><strong>${i+1}.</strong> ${q.question}</p>
-                    <div style="margin-top: 15px;">
-                        ${options.map((opt, idx) => `
-                            <label style="display:flex; align-items: center; padding:15px; border:1px solid #ddd; margin:10px 0; border-radius:12px; cursor:pointer; transition: 0.2s;">
-                                <input type="radio" name="q${q.id}" style="margin-right: 15px; transform: scale(1.2);" onclick="saveAnswer('${q.id}', ${idx})"> 
-                                <span>${opt}</span>
-                            </label>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
+        const alphabet = ['A', 'B', 'C', 'D'];
+        document.getElementById('quiz-body').innerHTML = examQuestions.map((q, i) => {
+            const opts = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
+            return `<div class="question-block">
+                <div class="subject-badge">${q.subject}</div>
+                <div style="font-weight:600; font-size:1.1rem; margin-bottom:20px;">${i+1}. ${q.question}</div>
+                ${opts.map((opt, idx) => `
+                    <label class="option-label">
+                        <input type="radio" name="q${q.id}" onclick="userAnswers['${q.id}']=${idx}" style="margin-right:15px; transform:scale(1.2);">
+                        <span class="option-prefix">${alphabet[idx]}.</span><span>${opt}</span>
+                    </label>`).join('')}
+            </div>`;
         }).join('');
     }
 
-    function saveAnswer(questionId, answerIndex) {
-        userAnswers[questionId] = answerIndex;
-        console.log("Answers saved:", userAnswers);
-    }
-
-    // 4. UTILITIES (Timer & Submission)
-    function startTimer(minutes) {
-        let time = minutes * 60;
-        const display = document.getElementById('timer');
-        
+    function startTimer(min) {
+        let sec = min * 60;
         timerInterval = setInterval(() => {
-            let mins = Math.floor(time / 60);
-            let secs = time % 60;
-            display.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-            
-            if (--time < 0) {
-                clearInterval(timerInterval);
-                alert("Time is up! Submitting your exam automatically.");
-                submitExam();
-            }
+            let m = Math.floor(sec / 60), s = sec % 60;
+            document.getElementById('timer').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+            if (--sec < 0) { clearInterval(timerInterval); submitExam(true); }
         }, 1000);
     }
 
-    function submitExam() {
-        clearInterval(timerInterval);
+    /* --- RESULTS & REVIEW KEY --- */
+    function submitExam(auto = false) {
         const total = examQuestions.length;
         const answered = Object.keys(userAnswers).length;
+        if (!auto && !confirm(`SUMMARY:\nAnswered: ${answered}\nUnanswered: ${total - answered}\n\nProceed to declare results?`)) return;
         
-        alert(`Assessment Completed!\nQuestions Answered: ${answered} / ${total}\n\nResults will be analyzed shortly.`);
-        // In the next phase, we will add the code to save these results to your 'exam_results' table.
+        clearInterval(timerInterval);
+        let score = 0;
+        let reviewHTML = `<div style="margin-top: 40px; text-align: left;"><h3 style="color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 10px;">Review Key</h3>`;
+
+        examQuestions.forEach((q, i) => {
+            const opts = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
+            const studentIdx = userAnswers[q.id];
+            const correctIdx = q.correct_option;
+            const alphabet = ['A', 'B', 'C', 'D'];
+            const isCorrect = (studentIdx !== undefined && studentIdx == correctIdx);
+            if (isCorrect) score++;
+
+            reviewHTML += `
+                <div style="padding: 20px; border-bottom: 1px solid #eee; background: ${isCorrect ? '#f0fff4' : '#fff5f5'}">
+                    <p><strong>Q${i+1}:</strong> ${q.question}</p>
+                    <p style="margin: 5px 0;">👤 <strong>Your Answer:</strong> ${studentIdx !== undefined ? alphabet[studentIdx] + ') ' + opts[studentIdx] : 'Not Answered'}</p>
+                    <p style="margin: 5px 0;">✅ <strong>Correct Answer:</strong> <span style="color: #27ae60; font-weight: bold;">${alphabet[correctIdx]}) ${opts[correctIdx]}</span></p>
+                </div>`;
+        });
+
+        document.getElementById('exam-screen').innerHTML = `
+            <div class="container" style="text-align:center;">
+                <img src="Panya_New_logo-removebg-preview.png" style="height:60px; margin-bottom:20px;">
+                <h1 style="color:var(--primary);">Mock Test Result</h1>
+                <div style="background:var(--primary); color:white; padding:30px; border-radius:15px; margin:20px 0;">
+                    <div style="font-size:3.5rem; font-weight:800;">${score} / ${total}</div>
+                </div>
+                <button class="btn-final" onclick="location.reload()">Take Another Test</button>
+                ${reviewHTML}</div>`;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 </script>
-
 </body>
 </html>
