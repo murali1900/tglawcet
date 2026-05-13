@@ -1,1 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TG LAWCET Master Prep | Panya Computech</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #1a2a6c; --accent: #f24e1e; --bg: #f4f7f9; --text: #2d3436; --border: #dfe6e9; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; user-select: none; }
+        .header-nav { background: var(--primary); padding: 12px 40px; display: flex; justify-content: space-between; align-items: center; color: white; position: sticky; top: 0; z-index: 1000; }
+        .panya-logo { height: 45px; }
+        .container { max-width: 900px; margin: 30px auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .question-block { margin-bottom: 40px; padding-bottom: 30px; border-bottom: 1px solid var(--border); }
+        .option-label { display: flex; align-items: center; padding: 16px 25px; border: 2px solid var(--border); margin: 12px 0; border-radius: 10px; cursor: pointer; }
+        .option-label:has(input:checked) { border-color: var(--primary); background-color: #f0f4ff; }
+        .btn-final { background: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 800; cursor: pointer; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
 
+<header class="header-nav hidden" id="main-header">
+    <div style="display: flex; align-items: center; gap: 20px;">
+        <img src="Panya_New_logo-removebg-preview.png" class="panya-logo">
+        <div style="font-size: 0.8rem; border-left: 1px solid rgba(255,255,255,0.3); padding-left: 20px;">Provided <strong>Free of Cost</strong> by Panya Computech LLP</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 25px;">
+        <div id="timer" style="font-family: monospace; font-size: 1.4rem;">90:00</div>
+        <button class="btn-final" onclick="submitExam()">Final Submit</button>
+    </div>
+</header>
+
+<div id="auth-screen" class="container" style="text-align: center; margin-top: 80px;">
+    <img src="Panya_New_logo-removebg-preview.png" style="height: 80px; margin-bottom: 20px;">
+    <h1 style="color: var(--primary);">TG LAWCET 2026</h1>
+    <div id="email-section">
+        <input type="email" id="email" placeholder="Registered Email" style="width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 10px; border: 1px solid #eee;">
+        <button class="btn-final" style="width: 100%;" onclick="sendOTP()">Request Access OTP</button>
+    </div>
+    <div id="otp-section" class="hidden" style="margin-top: 30px;">
+        <input type="text" id="otp" placeholder="000000" style="width: 150px; text-align: center; font-size: 1.5rem; padding: 10px; border: 2px solid var(--primary);">
+        <button class="btn-final" style="width: 100%; margin-top: 15px;" onclick="verifyOTP()">Verify & Start</button>
+    </div>
+</div>
+
+<div id="exam-screen" class="hidden">
+    <div class="container"><div id="quiz-body">Loading...</div></div>
+</div>
+
+<script>
+    const SB_URL = 'https://hnvlknpfdgmtokbknoyi.supabase.co'; 
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhudmxrbnBmZGdtdG9rYmtub3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDM1MjYsImV4cCI6MjA5NDE3OTUyNn0.WNvY5FaB5nyNXiGXpATc_cHdYJnPu_isz6ELJofZN64';
+    const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+
+    let userAnswers = {}; let examQuestions = []; let timerInterval; let isExamActive = false;
+
+    async function sendOTP() {
+        const email = document.getElementById('email').value;
+        const { error } = await supabaseClient.auth.signInWithOtp({ email });
+        if (error) alert(error.message); else document.getElementById('otp-section').classList.remove('hidden');
+    }
+
+    async function verifyOTP() {
+        const email = document.getElementById('email').value;
+        const token = document.getElementById('otp').value;
+        const { error } = await supabaseClient.auth.verifyOtp({ email, token, type: 'email' });
+        if (error) alert("Invalid OTP"); else loadExam();
+    }
+
+    async function loadExam() {
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('main-header').classList.remove('hidden');
+        document.getElementById('exam-screen').classList.remove('hidden');
+        const { data, error } = await supabaseClient.rpc('get_random_exam');
+        if (error) alert(error.message); else { examQuestions = data; renderQuiz(); startTimer(90); isExamActive = true; }
+    }
+
+    function renderQuiz() {
+        const alphabet = ['A', 'B', 'C', 'D'];
+        document.getElementById('quiz-body').innerHTML = examQuestions.map((q, i) => {
+            const opts = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
+            return `<div class="question-block">
+                <div style="font-weight:600; margin-bottom:20px;">${i+1}. ${q.question}</div>
+                ${opts.map((opt, idx) => `
+                    <label class="option-label">
+                        <input type="radio" name="q${q.id}" onchange="userAnswers['${q.id}']=${idx}">
+                        <span style="font-weight:bold; margin-right:10px;">${alphabet[idx]}.</span><span>${opt}</span>
+                    </label>`).join('')}
+            </div>`;
+        }).join('');
+    }
+
+    function startTimer(min) {
+        let sec = min * 60;
+        timerInterval = setInterval(() => {
+            let m = Math.floor(sec / 60), s = sec % 60;
+            document.getElementById('timer').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+            if (--sec < 0) { clearInterval(timerInterval); submitExam(true); }
+        }, 1000);
+    }
+
+    function submitExam(auto = false) {
+        if (!auto && !confirm(`Declare Results?`)) return;
+        isExamActive = false; clearInterval(timerInterval);
+        let score = 0;
+        let reviewHTML = `<div style="margin-top: 40px; text-align: left;"><h3>Review Key</h3>`;
+
+        examQuestions.forEach((q, i) => {
+            const opts = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
+            const studentIdx = userAnswers[q.id];
+            const correctIdx = Number(q.correct_index); // Fixed column name
+            const alphabet = ['A', 'B', 'C', 'D'];
+            const isCorrect = (studentIdx != null && studentIdx == correctIdx);
+            if (isCorrect) score++;
+
+            reviewHTML += `
+                <div style="padding: 20px; border-bottom: 1px solid #eee; background: ${isCorrect ? '#f0fff4' : '#fff5f5'}">
+                    <p><strong>Q${i+1}:</strong> ${q.question}</p>
+                    <p>👤 <strong>Your Answer:</strong> ${studentIdx != null ? alphabet[studentIdx] + ') ' + opts[studentIdx] : 'Not Answered'}</p>
+                    <p>✅ <strong>Correct Answer:</strong> ${alphabet[correctIdx]}) ${opts[correctIdx]}</p>
+                </div>`;
+        });
+
+        document.getElementById('exam-screen').innerHTML = `
+            <div class="container" style="text-align:center;">
+                <img src="Panya_New_logo-removebg-preview.png" style="height:60px; margin-bottom:20px;">
+                <h1>Score: ${score} / ${examQuestions.length}</h1>
+                <button class="btn-final" onclick="location.reload()">Restart</button>
+                ${reviewHTML}
+            </div>`;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+</script>
+</body>
+</html>
