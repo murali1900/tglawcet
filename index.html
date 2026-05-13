@@ -76,7 +76,7 @@
 </div>
 
 <div id="exam-screen" class="hidden">
-    <div class="container"><div id="quiz-body">Loading...</div></div>
+    <div class="container"><div id="quiz-body">Initializing...</div></div>
 </div>
 
 <script>
@@ -84,16 +84,26 @@
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhudmxrbnBmZGdtdG9rYmtub3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDM1MjYsImV4cCI6MjA5NDE3OTUyNn0.WNvY5FaB5nyNXiGXpATc_cHdYJnPu_isz6ELJofZN64';
     const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
-    let userAnswers = {}; let examQuestions = []; let timerInterval; let tabSwitches = 0;
+    let userAnswers = {}; 
+    let examQuestions = []; 
+    let timerInterval; 
+    let tabSwitches = 0;
+    let isExamActive = false; // Logic Gate
 
     /* --- HARDENED PROTECTION --- */
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.onkeydown = e => { if(e.keyCode == 123 || (e.ctrlKey && [67,85,83,73].includes(e.keyCode))) return false; };
+    
     document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
+        // Only trigger during the active exam phase
+        if (document.hidden && isExamActive) {
             tabSwitches++;
-            if (tabSwitches === 1) alert("⚠️ WARNING: Tab switching is NOT allowed. One more switch will disqualify you.");
-            else if (tabSwitches >= 2) { alert("❌ DISQUALIFIED: Multiple tab switches detected. Submitting exam."); submitExam(true); }
+            if (tabSwitches === 1) {
+                alert("⚠️ WARNING: Tab switching is NOT allowed during the TG LAWCET Mock Test. \n\nOne more switch will result in automatic submission.");
+            } else if (tabSwitches >= 2) {
+                alert("❌ DISQUALIFIED: Multiple tab switches detected.");
+                submitExam(true); 
+            }
         }
     });
 
@@ -116,8 +126,15 @@
         document.getElementById('auth-screen').classList.add('hidden');
         document.getElementById('main-header').classList.remove('hidden');
         document.getElementById('exam-screen').classList.remove('hidden');
+        
         const { data, error } = await supabaseClient.rpc('get_random_exam');
-        if (error) alert(error.message); else { examQuestions = data; renderQuiz(); startTimer(90); }
+        if (error) alert(error.message); 
+        else { 
+            examQuestions = data; 
+            renderQuiz(); 
+            startTimer(90); 
+            isExamActive = true; // Activate protection
+        }
     }
 
     function renderQuiz() {
@@ -129,11 +146,15 @@
                 <div style="font-weight:600; font-size:1.1rem; margin-bottom:20px;">${i+1}. ${q.question}</div>
                 ${opts.map((opt, idx) => `
                     <label class="option-label">
-                        <input type="radio" name="q${q.id}" onclick="userAnswers['${q.id}']=${idx}" style="margin-right:15px; transform:scale(1.2);">
+                        <input type="radio" name="q${q.id}" onchange="recordAnswer('${q.id}', ${idx})">
                         <span class="option-prefix">${alphabet[idx]}.</span><span>${opt}</span>
                     </label>`).join('')}
             </div>`;
         }).join('');
+    }
+
+    function recordAnswer(qId, idx) {
+        userAnswers[qId] = idx;
     }
 
     function startTimer(min) {
@@ -145,39 +166,37 @@
         }, 1000);
     }
 
-    /* --- RESULTS & REVIEW KEY --- */
+    /* --- FINAL SUBMISSION & REVIEW --- */
     function submitExam(auto = false) {
-        const total = examQuestions.length;
-        const answered = Object.keys(userAnswers).length;
-        if (!auto && !confirm(`SUMMARY:\nAnswered: ${answered}\nUnanswered: ${total - answered}\n\nProceed to declare results?`)) return;
+        if (!auto && !confirm(`Submit your exam and see results?`)) return;
         
+        isExamActive = false; // Deactivate protection for results phase
         clearInterval(timerInterval);
+        
         let score = 0;
         let reviewHTML = `<div style="margin-top: 40px; text-align: left;"><h3 style="color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 10px;">Review Key</h3>`;
 
         examQuestions.forEach((q, i) => {
             const opts = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
             const studentIdx = userAnswers[q.id];
-            const correctIdx = parseInt(q.correct_option); 
+            const correctIdx = q.correct_option;
             const alphabet = ['A', 'B', 'C', 'D'];
             
-            const isCorrect = (studentIdx !== undefined && studentIdx == correctIdx);
+            // Loose equality for data type safety
+            const isCorrect = (studentIdx != null && studentIdx == correctIdx);
             if (isCorrect) score++;
-
-            const correctAnswerText = opts[correctIdx] || "Error retrieving answer";
-            const studentAnswerText = studentIdx !== undefined ? (opts[studentIdx] || "Choice recorded") : "Not Answered";
 
             reviewHTML += `
                 <div style="padding: 20px; border-bottom: 1px solid #eee; background: ${isCorrect ? '#f0fff4' : '#fff5f5'}">
                     <p><strong>Q${i+1}:</strong> ${q.question}</p>
-                    <p style="margin: 5px 0;">👤 <strong>Your Answer:</strong> 
+                    <p>👤 <strong>Your Answer:</strong> 
                        <span style="color: ${isCorrect ? '#27ae60' : '#e74c3c'}">
-                           ${studentIdx !== undefined ? alphabet[studentIdx] + ') ' + studentAnswerText : 'Not Answered'}
+                           ${studentIdx != null ? alphabet[studentIdx] + ') ' + opts[studentIdx] : 'Not Answered'}
                        </span>
                     </p>
-                    <p style="margin: 5px 0;">✅ <strong>Correct Answer:</strong> 
+                    <p>✅ <strong>Correct Answer:</strong> 
                        <span style="color: #27ae60; font-weight: bold;">
-                           ${alphabet[correctIdx]}) ${correctAnswerText}
+                           ${alphabet[correctIdx]}) ${opts[correctIdx]}
                        </span>
                     </p>
                 </div>`;
@@ -186,11 +205,8 @@
         document.getElementById('exam-screen').innerHTML = `
             <div class="container" style="text-align:center;">
                 <img src="Panya_New_logo-removebg-preview.png" style="height:60px; margin-bottom:20px;">
-                <h1 style="color:var(--primary);">Mock Test Result</h1>
-                <div style="background:var(--primary); color:white; padding:30px; border-radius:15px; margin:20px 0;">
-                    <div style="font-size:3.5rem; font-weight:800;">${score} / ${total}</div>
-                </div>
-                <button class="btn-final" onclick="location.reload()">Take Another Test</button>
+                <h1 style="color:var(--primary);">Final Score: ${score} / ${examQuestions.length}</h1>
+                <button class="btn-final" onclick="location.reload()">Restart Mock Test</button>
                 ${reviewHTML}
             </div>`;
         window.scrollTo({ top: 0, behavior: 'smooth' });
